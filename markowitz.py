@@ -16,21 +16,24 @@ Calculations:
 8. variance/sd
 9. sharpe ratio
 10. volatility
-11. Weight optimisation
+11. Weight optimisation - define random weights and see which gives the best result
 '''
 
 class  ModernPortfolioTheory:
     def __init__(self, stocks):
         self.stocks =  stocks
+        self.stocks["riskfree"] = 0
         self.trading_day = 252
-        self.weights = [0.33, 0.2, 0]
-        self.risk_free = 0.47 
+        self.weights = [0.33, 0.2, 0, 0.47]
+        self.riskfree_return =  (1+0.067)**(1/365) - 1 
+
 
     def get_expected_returns(self):        
         #expected returns
-        # return self.stocks.diff().sum(axis=0)
-        return self.stocks.diff().mean(axis=0)
-        # return self.stocks.diff()
+        #pct_chnage gives the changes
+        expected_returns = self.stocks.pct_change().mean()
+        expected_returns["riskfree"] = self.riskfree_return
+        return expected_returns
 
     def get_portfolio_return(self):
         #portfolio_return
@@ -46,7 +49,8 @@ class  ModernPortfolioTheory:
 
     def get_covariance_matrix(self):
         #calculate covariance matrix of the stocks
-        return self.stocks.diff().cov()
+        covariance = self.stocks.pct_change().cov()
+        return covariance.fillna(0)
 
     def get_variance(self):
         #calculate variance
@@ -59,10 +63,15 @@ class  ModernPortfolioTheory:
 
     def get_sharpe_ratio(self):
     #sharpe ratio = (portfolio_return - riskfree_return)/standard deviation 
-        return (self.get_portfolio_return()-self.risk_free)/self.get_standard_deviation()
+        return (self.get_portfolio_return()-self.riskfree_return)/self.get_standard_deviation()
     def get_volatility(self):
     #volatility = sqrt(variance*trading dayj)
         return np.sqrt(self.get_variance()*self.trading_day)
+
+    def __repr__(self):
+        print f"Expected returns of the stocks: {self.get_expected_returns()}"
+
+
       
 #data come from yahoo finance        
 # data = yf.download("SPY AAPL", start="2017-01-01", end="2018-04-30")
